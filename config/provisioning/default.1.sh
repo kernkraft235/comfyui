@@ -6,7 +6,7 @@
 
 # Packages are installed after nodes so we can fix them...
 
-DEFAULT_WORKFLOW="https://raw.githubusercontent.com/ai-dock/comfyui/main/config/workflows/flux-comfyui-example.json"
+#DEFAULT_WORKFLOW="https://..."
 
 APT_PACKAGES=(
     #"package-1"
@@ -28,11 +28,6 @@ CHECKPOINT_MODELS=(
     #"https://huggingface.co/stabilityai/stable-diffusion-2-1/resolve/main/v2-1_768-ema-pruned.ckpt"
     "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors"
     "https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0/resolve/main/sd_xl_refiner_1.0.safetensors"
-)
-
-CLIP_MODELS=(
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors"
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors"
 )
 
 UNET_MODELS=(
@@ -78,32 +73,17 @@ CONTROLNET_MODELS=(
     #"https://huggingface.co/webui/ControlNet-modules-safetensors/resolve/main/t2iadapter_style-fp16.safetensors"
 )
 
-### CUSTOM ENVIRONMENT VARIABLES ###
-# export HF_TOKEN=""
-# export CIVITAI_TOKEN=""
-
 ### DO NOT EDIT BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ###
 
 function provisioning_start() {
-    if [[ ! -d /opt/environments/python ]]; then
+    if [[ ! -d /opt/environments/python ]]; then 
         export MAMBA_BASE=true
     fi
     source /opt/ai-dock/etc/environment.sh
     source /opt/ai-dock/bin/venv-set.sh comfyui
 
-    # Get licensed models if HF_TOKEN set & valid
-    if provisioning_has_valid_hf_token; then
-        UNET_MODELS+=("https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors")
-        VAE_MODELS+=("https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors")
-    else
-        UNET_MODELS+=("https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/flux1-schnell.safetensors")
-        VAE_MODELS+=("https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors")
-        sed -i 's/flux1-dev\.safetensors/flux1-schnell.safetensors/g' /opt/ComfyUI/web/scripts/defaultGraph.js
-    fi
-
     provisioning_print_header
     provisioning_get_apt_packages
-    provisioning_get_default_workflow
     provisioning_get_nodes
     provisioning_get_pip_packages
     provisioning_get_models \
@@ -121,9 +101,6 @@ function provisioning_start() {
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/vae" \
         "${VAE_MODELS[@]}"
-    provisioning_get_models \
-        "${WORKSPACE}/storage/stable_diffusion/models/clip" \
-        "${CLIP_MODELS[@]}"
     provisioning_get_models \
         "${WORKSPACE}/storage/stable_diffusion/models/esrgan" \
         "${ESRGAN_MODELS[@]}"
@@ -184,7 +161,7 @@ function provisioning_get_default_workflow() {
 
 function provisioning_get_models() {
     if [[ -z $2 ]]; then return 1; fi
-
+    
     dir="$1"
     mkdir -p "$dir"
     shift
@@ -244,7 +221,7 @@ function provisioning_has_valid_civitai_token() {
 function provisioning_download() {
     if [[ -n $HF_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
         auth_token="$HF_TOKEN"
-    elif
+    elif 
         [[ -n $CIVITAI_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
         auth_token="$CIVITAI_TOKEN"
     fi
